@@ -469,3 +469,9 @@ patches:
       * Fixes a main_application_delegate SDK change
       * Fixes a non-null SDK change in a net unittest.
     This is needed for Electron to compile with XCode 10.0.
+-
+  author: Shelley Vohr <shelley.vohr@gmail.com>
+  file: backport_baaa9de.patch
+  description: |
+    Backports baaa9de, a patch which resolves
+    https://github.com/electron/electron/issues/14838.
