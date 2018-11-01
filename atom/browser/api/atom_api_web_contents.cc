@@ -46,10 +46,12 @@
 #include "atom/common/native_mate_converters/value_converter.h"
 #include "atom/common/options_switches.h"
 #include "base/message_loop/message_loop.h"
+#include "base/strings/sys_string_conversions.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/threading/thread_restrictions.h"
 #include "base/threading/thread_task_runner_handle.h"
 #include "base/values.h"
+#include "base/win/i18n.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/ssl/security_state_tab_helper.h"
 #include "content/browser/frame_host/frame_tree_node.h"
@@ -424,6 +426,19 @@ void WebContents::InitZoomController(content::WebContents* web_contents,
   if (options.Get(options::kZoomFactor, &zoom_factor))
     zoom_controller_->SetDefaultZoomFactor(zoom_factor);
 }
+
+#ifdef OS_WIN
+void WebContents::SetAcceptLanguages(content::RendererPreferences* prefs) {
+  std::vector<base::string16> languages;
+  base::win::i18n::GetThreadPreferredUILanguageList(&languages);
+  std::string accept_langs;
+  for (const auto& s16 : languages) {
+    accept_langs += base::SysWideToUTF8(s16) + ',';
+  }
+  accept_langs.pop_back();
+  prefs->accept_languages = accept_langs;
+}
+#endif
 
 void WebContents::InitWithSessionAndOptions(
     v8::Isolate* isolate,
