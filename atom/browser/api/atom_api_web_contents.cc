@@ -427,8 +427,9 @@ void WebContents::InitZoomController(content::WebContents* web_contents,
     zoom_controller_->SetDefaultZoomFactor(zoom_factor);
 }
 
-#ifdef OS_WIN
+#if defined(OS_WIN) || defined(OS_LINUX)
 void WebContents::SetAcceptLanguages(content::RendererPreferences* prefs) {
+#ifdef OS_WIN
   std::vector<base::string16> languages;
   base::win::i18n::GetThreadPreferredUILanguageList(&languages);
   std::string accept_langs;
@@ -437,6 +438,9 @@ void WebContents::SetAcceptLanguages(content::RendererPreferences* prefs) {
   }
   accept_langs.pop_back();
   prefs->accept_languages = accept_langs;
+#else  // OS_LINUX
+  prefs->accept_languages = g_browser_process->GetApplicationLocale();
+#endif
 }
 #endif
 
