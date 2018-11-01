@@ -29,6 +29,10 @@ namespace blink {
 struct WebDeviceEmulationParams;
 }
 
+namespace content {
+struct RendererPreferences;
+}
+
 namespace mate {
 class Arguments;
 class Dictionary;
@@ -479,6 +483,7 @@ class WebContents : public mate::TrackableObject<WebContents>,
 
   void InitZoomController(content::WebContents* web_contents,
                           const mate::Dictionary& options);
+  void SetAcceptLanguages(content::RendererPreferences* prefs);
 
   v8::Global<v8::Value> session_;
   v8::Global<v8::Value> devtools_web_contents_;

@@ -9,6 +9,7 @@
 #include "base/mac/bundle_locations.h"
 #include "base/mac/foundation_util.h"
 #include "base/path_service.h"
+#include "base/strings/sys_string_conversions.h"
 #include "ui/base/l10n/l10n_util_mac.h"
 
 namespace atom {
@@ -25,6 +26,11 @@ void AtomBrowserMainParts::PreMainMessageLoopStart() {
   [[NSUserDefaults standardUserDefaults]
       setObject:@"NO"
          forKey:@"NSTreatUnknownArgumentsAsOpen"];
+}
+
+std::string AtomBrowserMainParts::GetSystemPreferredLanguage() {
+  return base::SysNSStringToUTF8(
+      [[NSLocale preferredLanguages] objectAtIndex:0]);
 }
 
 void AtomBrowserMainParts::FreeAppDelegate() {

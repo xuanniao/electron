@@ -107,6 +107,7 @@ class AtomBrowserMainParts : public content::BrowserMainParts {
 #if defined(OS_MACOSX)
   void FreeAppDelegate();
   void InitializeMainNib();
+  std::string GetSystemPreferredLanguage();
 #endif
 
 #if defined(OS_MACOSX)
