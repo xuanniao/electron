@@ -3,10 +3,8 @@ From: Milan Burda <miburda@microsoft.com>
 Date: Fri, 26 Oct 2018 20:45:49 +0200
 Subject: chrome_process_finder.patch
 
-Fix some problems when using app.makeSingleInstance on POSIX systems
-* The original command line of new instances are passed instead
-  of the one modified by Chromium.
-* The command line is passed as Array.
+The original command line of new instances are passed instead of
+the one modified by Chromium. The command line is passed as Array.
 
 Reference: https://github.com/electron/electron/pull/3175
 
