@@ -346,6 +346,9 @@ void AtomBrowserMainParts::PostEarlyInitialization() {
   // command-line changes.
   base::FeatureList::ClearInstanceForTesting();
   InitializeFeatureList();
+
+  // Initialize after user script environment creation.
+  fake_browser_process_->PostEarlyInitialization();
 }
 
 int AtomBrowserMainParts::PreCreateThreads() {
@@ -392,6 +395,7 @@ int AtomBrowserMainParts::PreCreateThreads() {
   // Initialize net log file exporter.
   net_log_->net_export_file_writer()->Initialize();
 
+  fake_browser_process_->PreCreateThreads(command_line);
   // Manage global state of net and other IO thread related.
   io_thread_ = std::make_unique<IOThread>(net_log_.get());
 
@@ -521,6 +525,8 @@ void AtomBrowserMainParts::PostMainMessageLoopRun() {
       std::move(callback).Run();
     ++iter;
   }
+
+  fake_browser_process_->PostMainMessageLoopRun();
 }
 
 #if !defined(OS_MACOSX)
