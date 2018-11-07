@@ -44,6 +44,7 @@
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
+#include "chrome/browser/browser_process.h"
 #include "chrome/browser/printing/printing_message_filter.h"
 #include "components/net_log/chrome_net_log.h"
 #include "content/public/browser/browser_ppapi_host.h"
@@ -612,7 +613,7 @@ std::unique_ptr<base::Value> AtomBrowserClient::GetServiceManifestOverlay(
 }
 
 net::NetLog* AtomBrowserClient::GetNetLog() {
-  return AtomBrowserMainParts::Get()->net_log();
+  return g_browser_process->net_log();
 }
 
 content::BrowserMainParts* AtomBrowserClient::CreateBrowserMainParts(
