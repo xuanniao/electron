@@ -209,17 +209,9 @@ void AtomMainDelegate::PreSandboxStartup() {
   if (!IsBrowserProcess(command_line))
     return;
 
-  if (!command_line->HasSwitch(switches::kEnableMixedSandbox)) {
-    if (command_line->HasSwitch(switches::kEnableSandbox)) {
-      // Disable setuid sandbox since it is not longer required on
-      // linux(namespace sandbox is available on most distros).
-      command_line->AppendSwitch(
-          service_manager::switches::kDisableSetuidSandbox);
-    } else {
-      // Disable renderer sandbox for most of node's functions.
-      command_line->AppendSwitch(service_manager::switches::kNoSandbox);
-    }
-  }
+  // Disable setuid sandbox since it is not longer required on
+  // linux(namespace sandbox is available on most distros).
+  command_line->AppendSwitch(service_manager::switches::kDisableSetuidSandbox);
 
   // Allow file:// URIs to read other file:// URIs by default.
   command_line->AppendSwitch(::switches::kAllowFileAccessFromFiles);
@@ -243,10 +235,10 @@ content::ContentBrowserClient* AtomMainDelegate::CreateContentBrowserClient() {
 
 content::ContentRendererClient*
 AtomMainDelegate::CreateContentRendererClient() {
-  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
-          switches::kEnableSandbox) ||
-      !base::CommandLine::ForCurrentProcess()->HasSwitch(
-          service_manager::switches::kNoSandbox)) {
+  bool is_sandboxed = !service_manager::IsUnsandboxedSandboxType(
+      service_manager::SandboxTypeFromCommandLine(
+          *base::CommandLine::ForCurrentProcess()));
+  if (is_sandboxed) {
     renderer_client_.reset(new AtomSandboxedRendererClient);
   } else {
     renderer_client_.reset(new AtomRendererClient);

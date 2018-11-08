@@ -68,6 +68,7 @@
 #include "services/device/public/cpp/geolocation/location_provider.h"
 #include "services/network/public/cpp/resource_request_body.h"
 #include "services/proxy_resolver/public/mojom/proxy_resolver.mojom.h"
+#include "services/service_manager/sandbox/switches.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/resource/resource_bundle.h"
 #include "v8/include/v8.h"
@@ -385,7 +386,6 @@ void AtomBrowserClient::AppendExtraCommandLineSwitches(
 
   // Copy following switches to child process.
   static const char* const kCommonSwitchNames[] = {switches::kStandardSchemes,
-                                                   switches::kEnableSandbox,
                                                    switches::kSecureSchemes};
   command_line->CopySwitchesFrom(*base::CommandLine::ForCurrentProcess(),
                                  kCommonSwitchNames,
@@ -415,6 +415,17 @@ void AtomBrowserClient::AppendExtraCommandLineSwitches(
     auto* web_preferences = WebContentsPreferences::From(web_contents);
     if (web_preferences)
       web_preferences->AppendCommandLineSwitches(command_line);
+    bool sandbox_forced = base::CommandLine::ForCurrentProcess()->HasSwitch(
+        switches::kEnableSandbox);
+    bool mixed_sandbox_allowed =
+        base::CommandLine::ForCurrentProcess()->HasSwitch(
+            switches::kEnableMixedSandbox);
+    bool should_sandbox =
+        sandbox_forced || (mixed_sandbox_allowed &&
+                           web_preferences->IsEnabled(options::kSandbox));
+    if (!should_sandbox) {
+      command_line->AppendSwitch(service_manager::switches::kNoSandbox);
+    }
     SessionPreferences::AppendExtraCommandLineSwitches(
         web_contents->GetBrowserContext(), command_line);
   }
