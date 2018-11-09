@@ -27,6 +27,7 @@ v8.setFlagsFromString('--expose_gc')
 app.commandLine.appendSwitch('js-flags', '--expose_gc')
 app.commandLine.appendSwitch('ignore-certificate-errors')
 app.commandLine.appendSwitch('disable-renderer-backgrounding')
+app.enableMixedSandbox()
 
 // Disable security warnings (the security warnings test will enable them)
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = true
