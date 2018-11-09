@@ -142,4 +142,37 @@ bool Browser::IsUnityRunning() {
   return unity::IsRunning();
 }
 
+void ShowAboutPanel() {
+  std::string app_name, version, copyright, icon_path;
+
+  about_panel_options_.GetString("applicationName", &app_name);
+  about_panel_options_.GetString("applicationVersion", &version);
+  about_panel_options_.GetString("copyright", &copyright);
+  about_panel_options_.GetString("iconPath", &icon_path);
+
+  GdkPixbuf* icon = gdk_pixbuf_new_from_file(icon_path, NULL);
+  GtkWidget* dialog = gtk_about_dialog_new();
+
+  gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(dialog), app_name);
+  gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(dialog), version);
+  gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(dialog), copyright);
+  gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(dialog), icon);
+
+  g_object_unref(icon), icon = NULL;
+
+  gtk_dialog_run(GTK_DIALOG(dialog));
+  gtk_widget_destroy(dialog);
+}
+
+void SetAboutPanelOptions(const base::DictionaryValue& options) {
+  about_panel_options_.Clear();
+
+  for (base::DictionaryValue::Iterator iter(options); !iter.IsAtEnd();
+       iter.Advance()) {
+    std::string key = iter.key();
+    if (!key.empty() && iter.value().is_string())
+      about_panel_options_.SetString(key, iter.value().GetString());
+  }
+}
+
 }  // namespace atom

@@ -397,7 +397,6 @@ void Browser::SetAboutPanelOptions(const base::DictionaryValue& options) {
        iter.Advance()) {
     std::string key = iter.key();
     if (!key.empty() && iter.value().is_string()) {
-      key[0] = base::ToUpperASCII(key[0]);
       about_panel_options_.SetString(key, iter.value().GetString());
     }
   }

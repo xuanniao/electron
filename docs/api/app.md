@@ -1064,17 +1064,23 @@ details. Disabled by default.
 
 **Note:** Rendering accessibility tree can significantly affect the performance of your app. It should not be enabled by default.
 
-### `app.setAboutPanelOptions(options)` _macOS_
+### `app.showAboutPanel` _macOS_ _Linux_
+
+Show the app's about panel options. These options can be overridden with `app.setAboutPanelOptions(options)`.
+
+### `app.setAboutPanelOptions(options)` _macOS_ _Linux_
 
 * `options` Object
   * `applicationName` String (optional) - The app's name.
   * `applicationVersion` String (optional) - The app's version.
   * `copyright` String (optional) - Copyright information.
   * `credits` String (optional) - Credit information.
-  * `version` String (optional) - The app's build version number.
+  * `version` String (optional) - The app's build version number. _macOS_
 
 Set the about panel options. This will override the values defined in the app's
 `.plist` file. See the [Apple docs][about-panel-options] for more details.
+
+All except `version` are **required** on Linux.
 
 ### `app.startAccessingSecurityScopedResource(bookmarkData)` _macOS (mas)_
 
