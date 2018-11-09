@@ -267,6 +267,16 @@ void AtomBrowserClient::RenderProcessWillLaunch(
   auto* web_preferences =
       WebContentsPreferences::From(GetWebContentsFromProcessID(process_id));
   if (web_preferences) {
+    bool sandbox_forced = base::CommandLine::ForCurrentProcess()->HasSwitch(
+        switches::kEnableSandbox);
+    bool mixed_sandbox_allowed =
+        base::CommandLine::ForCurrentProcess()->HasSwitch(
+            switches::kEnableMixedSandbox);
+    bool should_sandbox =
+        sandbox_forced || (mixed_sandbox_allowed &&
+                           web_preferences->IsEnabled(options::kSandbox));
+    web_preferences->preference()->SetKey(options::kSandbox,
+                                          base::Value(should_sandbox));
     prefs.sandbox = web_preferences->IsEnabled(options::kSandbox);
     prefs.native_window_open =
         web_preferences->IsEnabled(options::kNativeWindowOpen);
@@ -415,15 +425,7 @@ void AtomBrowserClient::AppendExtraCommandLineSwitches(
     auto* web_preferences = WebContentsPreferences::From(web_contents);
     if (web_preferences)
       web_preferences->AppendCommandLineSwitches(command_line);
-    bool sandbox_forced = base::CommandLine::ForCurrentProcess()->HasSwitch(
-        switches::kEnableSandbox);
-    bool mixed_sandbox_allowed =
-        base::CommandLine::ForCurrentProcess()->HasSwitch(
-            switches::kEnableMixedSandbox);
-    bool should_sandbox =
-        sandbox_forced || (mixed_sandbox_allowed &&
-                           web_preferences->IsEnabled(options::kSandbox));
-    if (!should_sandbox) {
+    if (web_preferences && !web_preferences->IsEnabled(options::kSandbox)) {
       command_line->AppendSwitch(service_manager::switches::kNoSandbox);
     }
     SessionPreferences::AppendExtraCommandLineSwitches(
