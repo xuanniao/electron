@@ -13,8 +13,6 @@ const { closeWindow } = require('./window-helpers')
 const { expect } = chai
 const { app, BrowserWindow, Menu, ipcMain } = remote
 
-const isCI = remote.getGlobal('isCi')
-
 chai.use(chaiAsPromised)
 chai.use(dirtyChai)
 
@@ -513,8 +511,6 @@ describe('app module', () => {
 
     it('allows you to pass a custom executable and arguments', function () {
       if (process.platform !== 'win32') {
-        // FIXME(alexeykuzmin): Skip the test.
-        // this.skip()
         return
       }
 
@@ -749,15 +745,6 @@ describe('app module', () => {
       large: process.platform === 'win32' ? 32 : 48
     }
 
-    // (alexeykuzmin): `.skip()` called in `before`
-    // doesn't affect nested `describe`s.
-    beforeEach(function () {
-      // FIXME Get these specs running on Linux CI
-      if (process.platform === 'linux' && isCI) {
-        this.skip()
-      }
-    })
-
     it('fetches a non-empty icon', done => {
       app.getFileIcon(iconPath, (err, icon) => {
         expect(err).to.be.null()
@@ -801,8 +788,6 @@ describe('app module', () => {
       it('fetches a large icon', function (done) {
         // macOS does not support large icons
         if (process.platform === 'darwin') {
-          // FIXME(alexeykuzmin): Skip the test.
-          // this.skip()
           return done()
         }
 

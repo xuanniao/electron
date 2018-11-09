@@ -15,8 +15,6 @@ describe('autoUpdater module', function () {
   describe('checkForUpdates', function () {
     it('emits an error on Windows when called the feed URL is not set', function (done) {
       if (process.platform !== 'win32') {
-        // FIXME(alexeykuzmin): Skip the test.
-        // this.skip()
         return done()
       }
 
@@ -35,9 +33,8 @@ describe('autoUpdater module', function () {
     })
 
     it('correctly fetches the previously set FeedURL', function (done) {
+      // Can't use the auto updater on non-win32 platforms without code signign
       if (process.platform !== 'win32') {
-        // FIXME(alexeykuzmin): Skip the test.
-        // this.skip()
         return done()
       }
 
@@ -125,8 +122,6 @@ describe('autoUpdater module', function () {
   describe('quitAndInstall', () => {
     it('emits an error on Windows when no update is available', function (done) {
       if (process.platform !== 'win32') {
-        // FIXME(alexeykuzmin): Skip the test.
-        // this.skip()
         return done()
       }
 
@@ -141,8 +136,7 @@ describe('autoUpdater module', function () {
   describe('error event', () => {
     it('serializes correctly over the remote module', function (done) {
       if (process.platform === 'linux') {
-        // FIXME(alexeykuzmin): Skip the test.
-        // this.skip()
+        // Linux AutoUpdater does not throw errors, all methods are noops
         return done()
       }
 
@@ -152,8 +146,10 @@ describe('autoUpdater module', function () {
         done()
       })
 
+      // setFeedURL emits an error on darwin
       autoUpdater.setFeedURL('')
 
+      // checkForUpdates emits an error on win32
       if (process.platform === 'win32') {
         autoUpdater.checkForUpdates()
       }

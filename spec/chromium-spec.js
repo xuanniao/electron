@@ -831,19 +831,7 @@ describe('chromium feature', () => {
   })
 
   describe('webgl', () => {
-    before(function () {
-      if (isCI && process.platform === 'win32') {
-        this.skip()
-      }
-    })
-
     it('can be get as context in canvas', () => {
-      if (process.platform === 'linux') {
-        // FIXME(alexeykuzmin): Skip the test.
-        // this.skip()
-        return
-      }
-
       const webgl = document.createElement('canvas').getContext('webgl')
       assert.notStrictEqual(webgl, null)
     })
