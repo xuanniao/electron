@@ -39,7 +39,6 @@ class GtkMessageBox : public NativeWindowObserver {
                 const std::string& window_title,
                 const std::string& title,
                 const std::string& message,
-                const std::string& detail,  // unused on gtk
                 const std::string& checkbox_label,
                 bool checkbox_checked,
                 const gfx::ImageSkia& icon)
