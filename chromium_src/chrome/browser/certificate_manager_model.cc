@@ -9,7 +9,9 @@
 #include "base/bind.h"
 #include "base/logging.h"
 #include "base/strings/utf_string_conversions.h"
+#include "base/task/post_task.h"
 #include "content/public/browser/browser_context.h"
+#include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/resource_context.h"
 #include "crypto/nss_util.h"
@@ -26,7 +28,7 @@ net::NSSCertDatabase* g_nss_cert_database = nullptr;
 
 net::NSSCertDatabase* GetNSSCertDatabaseForResourceContext(
     content::ResourceContext* context,
-    const base::Callback<void(net::NSSCertDatabase*)>& callback) {
+    base::OnceCallback<void(net::NSSCertDatabase*)> callback) {
   // This initialization is not thread safe. This CHECK ensures that this code
   // is only run on a single thread.
   CHECK(content::BrowserThread::CurrentlyOn(content::BrowserThread::IO));
@@ -35,10 +37,8 @@ net::NSSCertDatabase* GetNSSCertDatabaseForResourceContext(
     // public and private slot.
     // Redirect any slot usage to this persistent slot on Linux.
     g_nss_cert_database = new net::NSSCertDatabase(
-        crypto::ScopedPK11Slot(
-            crypto::GetPersistentNSSKeySlot()) /* public slot */,
-        crypto::ScopedPK11Slot(
-            crypto::GetPersistentNSSKeySlot()) /* private slot */);
+        crypto::ScopedPK11Slot(PK11_GetInternalKeySlot()) /* public slot */,
+        crypto::ScopedPK11Slot(PK11_GetInternalKeySlot()) /* private slot */);
   }
   return g_nss_cert_database;
 }
@@ -71,10 +71,10 @@ net::NSSCertDatabase* GetNSSCertDatabaseForResourceContext(
 void CertificateManagerModel::Create(content::BrowserContext* browser_context,
                                      const CreationCallback& callback) {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
-  BrowserThread::PostTask(
-      BrowserThread::IO, FROM_HERE,
-      base::Bind(&CertificateManagerModel::GetCertDBOnIOThread,
-                 browser_context->GetResourceContext(), callback));
+  base::PostTask(
+      FROM_HERE, {BrowserThread::IO},
+      base::BindOnce(&CertificateManagerModel::GetCertDBOnIOThread,
+                     browser_context->GetResourceContext(), callback));
 }
 
 CertificateManagerModel::CertificateManagerModel(
@@ -84,7 +84,7 @@ CertificateManagerModel::CertificateManagerModel(
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
 }
 
-CertificateManagerModel::~CertificateManagerModel() {}
+CertificateManagerModel::~CertificateManagerModel() = default;
 
 int CertificateManagerModel::ImportFromPKCS12(
     PK11SlotInfo* slot_info,
@@ -144,10 +144,10 @@ void CertificateManagerModel::DidGetCertDBOnIOThread(
   DCHECK_CURRENTLY_ON(BrowserThread::IO);
 
   bool is_user_db_available = !!cert_db->GetPublicSlot();
-  BrowserThread::PostTask(
-      BrowserThread::UI, FROM_HERE,
-      base::Bind(&CertificateManagerModel::DidGetCertDBOnUIThread, cert_db,
-                 is_user_db_available, callback));
+  base::PostTask(
+      FROM_HERE, {BrowserThread::UI},
+      base::BindOnce(&CertificateManagerModel::DidGetCertDBOnUIThread, cert_db,
+                     is_user_db_available, callback));
 }
 
 // static
@@ -156,8 +156,8 @@ void CertificateManagerModel::GetCertDBOnIOThread(
     const CreationCallback& callback) {
   DCHECK_CURRENTLY_ON(BrowserThread::IO);
   net::NSSCertDatabase* cert_db = GetNSSCertDatabaseForResourceContext(
-      context,
-      base::Bind(&CertificateManagerModel::DidGetCertDBOnIOThread, callback));
+      context, base::BindOnce(&CertificateManagerModel::DidGetCertDBOnIOThread,
+                              callback));
   if (cert_db)
     DidGetCertDBOnIOThread(callback, cert_db);
 }

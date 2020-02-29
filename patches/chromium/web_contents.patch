@@ -1,0 +1,63 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Anonymous <anonymous@electronjs.org>
+Date: Thu, 20 Sep 2018 17:46:53 -0700
+Subject: web_contents.patch
+
+This allows overriding the RenderViewHostDelegateView of a WebContents, which
+is needed for OSR.
+
+Originally landed in https://github.com/electron/libchromiumcontent/pull/226.
+
+diff --git a/content/browser/web_contents/web_contents_impl.cc b/content/browser/web_contents/web_contents_impl.cc
+index ea2e52bf16dd7897a104c67dfcb2f95598cf291e..7ca7e5c594d729d365692336861abfc93a88680b 100644
+--- a/content/browser/web_contents/web_contents_impl.cc
++++ b/content/browser/web_contents/web_contents_impl.cc
+@@ -2062,6 +2062,12 @@ void WebContentsImpl::Init(const WebContents::CreateParams& params) {
+   std::string unique_name;
+   frame_tree_.root()->SetFrameName(params.main_frame_name, unique_name);
+ 
++  if (params.view && params.delegate_view) {
++    view_.reset(params.view);
++    render_view_host_delegate_view_ = params.delegate_view;
++  }
++
++  if (!view_) {
+   WebContentsViewDelegate* delegate =
+       GetContentClient()->browser()->GetWebContentsViewDelegate(this);
+ 
+@@ -2072,6 +2078,7 @@ void WebContentsImpl::Init(const WebContents::CreateParams& params) {
+     view_.reset(CreateWebContentsView(this, delegate,
+                                       &render_view_host_delegate_view_));
+   }
++  }  //  !view_
+   CHECK(render_view_host_delegate_view_);
+   CHECK(view_.get());
+ 
+diff --git a/content/public/browser/web_contents.h b/content/public/browser/web_contents.h
+index 40e1e940f87bdf375bd966086893cd829cb7c7bd..eb3523996af34cf8b7b48ae8aa6ad96f83568892 100644
+--- a/content/public/browser/web_contents.h
++++ b/content/public/browser/web_contents.h
+@@ -79,9 +79,12 @@ class BrowserPluginGuestDelegate;
+ class InterstitialPage;
+ class RenderFrameHost;
+ class RenderViewHost;
++class RenderViewHostDelegateView;
+ class RenderWidgetHost;
+ class RenderWidgetHostView;
++class RenderWidgetHostViewBase;
+ class WebContentsDelegate;
++class WebContentsView;
+ struct CustomContextMenuContext;
+ struct DropData;
+ struct FaviconURL;
+@@ -214,6 +217,10 @@ class WebContents : public PageNavigator,
+       kInitializeAndWarmupRendererProcess,
+     } desired_renderer_state;
+ 
++    // Optionally specify the view and delegate view.
++    content::WebContentsView* view = nullptr;
++    content::RenderViewHostDelegateView* delegate_view = nullptr;
++
+     // Sandboxing flags set on the new WebContents.
+     blink::WebSandboxFlags starting_sandbox_flags;
+ 

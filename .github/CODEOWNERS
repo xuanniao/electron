@@ -3,19 +3,10 @@
 # https://help.github.com/articles/about-codeowners
 # https://git-scm.com/docs/gitignore
 
-# Everything that falls through the cracks:
-* @electron/reviewers
+# Upgrades WG
+/patches/                               @electron/wg-upgrades
+DEPS                                    @electron/wg-upgrades
 
-# filename patterns
-*browser_view* @electron/browserview
-*notification* @electron/notifications
-*pdf* @electron/printing
-*printing* @electron/printing
-*updater* @electron/updater
-
-# directories
-/.github/ @electron/electrocats
-/default_app/ @electron/docs
-/docs/ @electron/docs
-/docs-translations/ @electron/i18n
-/npm/ @electron/electrocats
+# Releases WG
+/npm/                                   @electron/wg-releases
+/script/release                         @electron/wg-releases

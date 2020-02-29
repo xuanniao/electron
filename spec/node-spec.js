@@ -1,19 +1,24 @@
 const ChildProcess = require('child_process')
-const chai = require('chai')
-const { expect } = chai
-const dirtyChai = require('dirty-chai')
+const { expect } = require('chai')
 const fs = require('fs')
 const path = require('path')
 const os = require('os')
-const { ipcRenderer, remote } = require('electron')
+const { ipcRenderer } = require('electron')
+const features = process.electronBinding('features')
 
-const isCI = remote.getGlobal('isCi')
-chai.use(dirtyChai)
+const { emittedOnce } = require('./events-helpers')
+const { ifit } = require('./spec-helpers')
 
 describe('node feature', () => {
   const fixtures = path.join(__dirname, 'fixtures')
 
   describe('child_process', () => {
+    beforeEach(function () {
+      if (!features.isRunAsNodeEnabled()) {
+        this.skip()
+      }
+    })
+
     describe('child_process.fork', () => {
       it('works in current process', (done) => {
         const child = ChildProcess.fork(path.join(fixtures, 'module', 'ping.js'))
@@ -47,16 +52,6 @@ describe('node feature', () => {
         const child = ChildProcess.fork(path.join(fixtures, 'module', 'fork_ping.js'), [], {
           path: process.env['PATH']
         })
-        child.on('message', (msg) => {
-          expect(msg).to.equal('message')
-          done()
-        })
-        child.send('message')
-      })
-
-      it('works in browser process', (done) => {
-        const fork = remote.require('child_process').fork
-        const child = fork(path.join(fixtures, 'module', 'ping.js'))
         child.on('message', (msg) => {
           expect(msg).to.equal('message')
           done()
@@ -104,6 +99,18 @@ describe('node feature', () => {
         })
         forked.send('hello')
       })
+
+      it('has the electron version in process.versions', (done) => {
+        const source = 'process.send(process.versions)'
+        const forked = ChildProcess.fork('--eval', [source])
+        forked.on('message', (message) => {
+          expect(message)
+            .to.have.own.property('electron')
+            .that.is.a('string')
+            .and.matches(/^\d+\.\d+\.\d+(\S*)?$/)
+          done()
+        })
+      })
     })
 
     describe('child_process.spawn', () => {
@@ -134,6 +141,19 @@ describe('node feature', () => {
         })
       })
     })
+
+    describe('child_process.exec', () => {
+      (process.platform === 'linux' ? it : it.skip)('allows executing a setuid binary from non-sandboxed renderer', () => {
+        // Chrome uses prctl(2) to set the NO_NEW_PRIVILEGES flag on Linux (see
+        // https://github.com/torvalds/linux/blob/40fde647cc/Documentation/userspace-api/no_new_privs.rst).
+        // We disable this for unsandboxed processes, which the renderer tests
+        // are running in. If this test fails with an error like 'effective uid
+        // is not 0', then it's likely that our patch to prevent the flag from
+        // being set has become ineffective.
+        const stdout = ChildProcess.execSync('sudo --help')
+        expect(stdout).to.not.be.empty()
+      })
+    })
   })
 
   describe('contexts', () => {
@@ -151,10 +171,15 @@ describe('node feature', () => {
         const listeners = process.listeners('uncaughtException')
         process.removeAllListeners('uncaughtException')
         process.on('uncaughtException', (thrown) => {
-          expect(thrown).to.equal(error)
-          process.removeAllListeners('uncaughtException')
-          listeners.forEach((listener) => process.on('uncaughtException', listener))
-          done()
+          try {
+            expect(thrown).to.equal(error)
+            done()
+          } catch (e) {
+            done(e)
+          } finally {
+            process.removeAllListeners('uncaughtException')
+            listeners.forEach((listener) => process.on('uncaughtException', listener))
+          }
         })
         fs.readFile(__filename, () => {
           throw error
@@ -176,84 +201,30 @@ describe('node feature', () => {
       })
     })
 
-    describe('setTimeout called under Chromium event loop in browser process', () => {
+    describe('setTimeout called under blink env in renderer process', () => {
       it('can be scheduled in time', (done) => {
-        remote.getGlobal('setTimeout')(done, 0)
+        setTimeout(done, 10)
       })
 
-      it('can be promisified', (done) => {
-        remote.getGlobal('setTimeoutPromisified')(0).then(done)
+      it('works from the timers module', (done) => {
+        require('timers').setTimeout(done, 10)
       })
     })
 
-    describe('setInterval called under Chromium event loop in browser process', () => {
+    describe('setInterval called under blink env in renderer process', () => {
       it('can be scheduled in time', (done) => {
-        let interval = null
-        let clearing = false
-        const clear = () => {
-          if (interval === null || clearing) return
-
-          // interval might trigger while clearing (remote is slow sometimes)
-          clearing = true
-          remote.getGlobal('clearInterval')(interval)
-          clearing = false
-          interval = null
+        const id = setInterval(() => {
+          clearInterval(id)
           done()
-        }
-        interval = remote.getGlobal('setInterval')(clear, 10)
-      })
-    })
-  })
-
-  describe('inspector', () => {
-    let child = null
-
-    afterEach(() => {
-      if (child !== null) child.kill()
-    })
-
-    it('supports starting the v8 inspector with --inspect/--inspect-brk', (done) => {
-      child = ChildProcess.spawn(process.execPath, ['--inspect-brk', path.join(__dirname, 'fixtures', 'module', 'run-as-node.js')], {
-        env: {
-          ELECTRON_RUN_AS_NODE: true
-        }
+        }, 10)
       })
 
-      let output = ''
-      function cleanup () {
-        child.stderr.removeListener('data', errorDataListener)
-        child.stdout.removeListener('data', outDataHandler)
-      }
-      function errorDataListener (data) {
-        output += data
-        if (output.trim().startsWith('Debugger listening on ws://')) {
-          cleanup()
+      it('can be scheduled in time from timers module', (done) => {
+        const { setInterval, clearInterval } = require('timers')
+        const id = setInterval(() => {
+          clearInterval(id)
           done()
-        }
-      }
-      function outDataHandler (data) {
-        cleanup()
-        done(new Error(`Unexpected output: ${data.toString()}`))
-      }
-      child.stderr.on('data', errorDataListener)
-      child.stdout.on('data', outDataHandler)
-    })
-
-    it('supports js binding', (done) => {
-      child = ChildProcess.spawn(process.execPath, ['--inspect', path.join(__dirname, 'fixtures', 'module', 'inspector-binding.js')], {
-        env: {
-          ELECTRON_RUN_AS_NODE: true
-        },
-        stdio: ['ipc']
-      })
-
-      child.on('message', ({ cmd, debuggerEnabled, secondSessionOpened, success }) => {
-        if (cmd === 'assert') {
-          expect(debuggerEnabled).to.be.true()
-          expect(secondSessionOpened).to.be.true()
-          expect(success).to.be.true()
-          done()
-        }
+        }, 10)
       })
     })
   })
@@ -282,7 +253,7 @@ describe('node feature', () => {
 
   describe('net.connect', () => {
     before(function () {
-      if (process.platform !== 'darwin') {
+      if (!features.isRunAsNodeEnabled() || process.platform !== 'darwin') {
         this.skip()
       }
     })
@@ -352,21 +323,8 @@ describe('node feature', () => {
       }).to.not.throw()
     })
 
-    it('should have isTTY defined on Mac and Linux', function () {
-      if (isCI || process.platform === 'win32') {
-        this.skip()
-        return
-      }
-
-      expect(process.stdout.isTTY).to.be.a('boolean')
-    })
-
-    it('should have isTTY undefined on Windows', function () {
-      if (isCI || process.platform !== 'win32') {
-        this.skip()
-        return
-      }
-
+    // TODO: figure out why process.stdout.isTTY is true on Darwin but not Linux/Win.
+    ifit(process.platform !== 'darwin')('isTTY should be undefined in the renderer process', function () {
       expect(process.stdout.isTTY).to.be.undefined()
     })
   })
@@ -390,6 +348,62 @@ describe('node feature', () => {
   describe('vm.runInNewContext', () => {
     it('should not crash', () => {
       require('vm').runInNewContext('')
+    })
+  })
+
+  describe('crypto', () => {
+    it('should list the ripemd160 hash in getHashes', () => {
+      expect(require('crypto').getHashes()).to.include('ripemd160')
+    })
+
+    it('should be able to create a ripemd160 hash and use it', () => {
+      const hash = require('crypto').createHash('ripemd160')
+      hash.update('electron-ripemd160')
+      expect(hash.digest('hex')).to.equal('fa7fec13c624009ab126ebb99eda6525583395fe')
+    })
+
+    it('should list aes-{128,256}-cfb in getCiphers', () => {
+      expect(require('crypto').getCiphers()).to.include.members(['aes-128-cfb', 'aes-256-cfb'])
+    })
+
+    it('should be able to create an aes-128-cfb cipher', () => {
+      require('crypto').createCipheriv('aes-128-cfb', '0123456789abcdef', '0123456789abcdef')
+    })
+
+    it('should be able to create an aes-256-cfb cipher', () => {
+      require('crypto').createCipheriv('aes-256-cfb', '0123456789abcdef0123456789abcdef', '0123456789abcdef')
+    })
+
+    it('should list des-ede-cbc in getCiphers', () => {
+      expect(require('crypto').getCiphers()).to.include('des-ede-cbc')
+    })
+
+    it('should be able to create an des-ede-cbc cipher', () => {
+      const key = Buffer.from('0123456789abcdeff1e0d3c2b5a49786', 'hex')
+      const iv = Buffer.from('fedcba9876543210', 'hex')
+      require('crypto').createCipheriv('des-ede-cbc', key, iv)
+    })
+
+    it('should not crash when getting an ECDH key', () => {
+      const ecdh = require('crypto').createECDH('prime256v1')
+      expect(ecdh.generateKeys()).to.be.an.instanceof(Buffer)
+      expect(ecdh.getPrivateKey()).to.be.an.instanceof(Buffer)
+    })
+
+    it('should not crash when generating DH keys or fetching DH fields', () => {
+      const dh = require('crypto').createDiffieHellman('modp15')
+      expect(dh.generateKeys()).to.be.an.instanceof(Buffer)
+      expect(dh.getPublicKey()).to.be.an.instanceof(Buffer)
+      expect(dh.getPrivateKey()).to.be.an.instanceof(Buffer)
+      expect(dh.getPrime()).to.be.an.instanceof(Buffer)
+      expect(dh.getGenerator()).to.be.an.instanceof(Buffer)
+    })
+
+    it('should not crash when creating an ECDH cipher', () => {
+      const crypto = require('crypto')
+      const dh = crypto.createECDH('prime256v1')
+      dh.generateKeys()
+      dh.setPrivateKey(dh.getPrivateKey())
     })
   })
 

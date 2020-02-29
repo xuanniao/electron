@@ -50,23 +50,33 @@ Returns `Number` - The current zoom level.
 
 Sets the maximum and minimum pinch-to-zoom level.
 
-### `webFrame.setLayoutZoomLevelLimits(minimumLevel, maximumLevel)`
-
-* `minimumLevel` Number
-* `maximumLevel` Number
-
-Sets the maximum and minimum layout-based (i.e. non-visual) zoom level.
+> **NOTE**: Visual zoom is disabled by default in Electron. To re-enable it, call:
+>
+> ```js
+> webFrame.setVisualZoomLevelLimits(1, 3)
+> ```
 
 ### `webFrame.setSpellCheckProvider(language, provider)`
 
 * `language` String
 * `provider` Object
-  * `spellCheck` Function.
+  * `spellCheck` Function
     * `words` String[]
     * `callback` Function
       * `misspeltWords` String[]
 
 Sets a provider for spell checking in input fields and text areas.
+
+If you want to use this method you must disable the builtin spellchecker when you
+construct the window.
+
+```js
+const mainWindow = new BrowserWindow({
+  webPreferences: {
+    spellcheck: false
+  }
+})
+```
 
 The `provider` must be an object that has a `spellCheck` method that accepts
 an array of individual words for spellchecking.
@@ -89,33 +99,22 @@ webFrame.setSpellCheckProvider('en-US', {
 })
 ```
 
-### `webFrame.registerURLSchemeAsBypassingCSP(scheme)`
+### `webFrame.insertCSS(css)`
 
-* `scheme` String
+* `css` String - CSS source code.
 
-Resources will be loaded from this `scheme` regardless of the current page's
-Content Security Policy.
+Returns `String` - A key for the inserted CSS that can later be used to remove
+the CSS via `webFrame.removeInsertedCSS(key)`.
 
-### `webFrame.registerURLSchemeAsPrivileged(scheme[, options])`
+Injects CSS into the current web page and returns a unique key for the inserted
+stylesheet.
 
-* `scheme` String
-* `options` Object (optional)
-  * `secure` Boolean (optional) - Default true.
-  * `bypassCSP` Boolean (optional) - Default true.
-  * `allowServiceWorkers` Boolean (optional) - Default true.
-  * `supportFetchAPI` Boolean (optional) - Default true.
-  * `corsEnabled` Boolean (optional) - Default true.
+### `webFrame.removeInsertedCSS(key)`
 
-Registers the `scheme` as secure, bypasses content security policy for resources,
-allows registering ServiceWorker and supports fetch API.
+* `key` String
 
-Specify an option with the value of `false` to omit it from the registration.
-An example of registering a privileged scheme, without bypassing Content Security Policy:
-
-```javascript
-const { webFrame } = require('electron')
-webFrame.registerURLSchemeAsPrivileged('foo', { bypassCSP: false })
-```
+Removes the inserted CSS from the current web page. The stylesheet is identified
+by its key, which is returned from `webFrame.insertCSS(css)`.
 
 ### `webFrame.insertText(text)`
 
@@ -123,12 +122,10 @@ webFrame.registerURLSchemeAsPrivileged('foo', { bypassCSP: false })
 
 Inserts `text` to the focused element.
 
-### `webFrame.executeJavaScript(code[, userGesture, callback])`
+### `webFrame.executeJavaScript(code[, userGesture])`
 
 * `code` String
 * `userGesture` Boolean (optional) - Default is `false`.
-* `callback` Function (optional) - Called after script has been executed.
-  * `result` Any
 
 Returns `Promise<any>` - A promise that resolves with the result of the executed code
 or is rejected if the result of the code is a rejected promise.
@@ -139,36 +136,26 @@ In the browser window some HTML APIs like `requestFullScreen` can only be
 invoked by a gesture from the user. Setting `userGesture` to `true` will remove
 this limitation.
 
-### `webFrame.executeJavaScriptInIsolatedWorld(worldId, scripts[, userGesture, callback])`
+### `webFrame.executeJavaScriptInIsolatedWorld(worldId, scripts[, userGesture])`
 
 * `worldId` Integer - The ID of the world to run the javascript in, `0` is the default world, `999` is the world used by Electrons `contextIsolation` feature.  You can provide any integer here.
 * `scripts` [WebSource[]](structures/web-source.md)
 * `userGesture` Boolean (optional) - Default is `false`.
-* `callback` Function (optional) - Called after script has been executed.
-  * `result` Any
 
-Work like `executeJavaScript` but evaluates `scripts` in an isolated context.
+Returns `Promise<any>` - A promise that resolves with the result of the executed code
+or is rejected if the result of the code is a rejected promise.
 
-### `webFrame.setIsolatedWorldContentSecurityPolicy(worldId, csp)`
+Works like `executeJavaScript` but evaluates `scripts` in an isolated context.
 
-* `worldId` Integer - The ID of the world to run the javascript in, `0` is the default world, `999` is the world used by Electrons `contextIsolation` feature.  You can provide any integer here.
-* `csp` String
+### `webFrame.setIsolatedWorldInfo(worldId, info)`
+* `worldId` Integer - The ID of the world to run the javascript in, `0` is the default world, `999` is the world used by Electrons `contextIsolation` feature. Chrome extensions reserve the range of IDs in `[1 << 20, 1 << 29)`. You can provide any integer here.
+* `info` Object
+  * `securityOrigin` String (optional) - Security origin for the isolated world.
+  * `csp` String (optional) - Content Security Policy for the isolated world.
+  * `name` String (optional) - Name for isolated world. Useful in devtools.
 
-Set the content security policy of the isolated world.
-
-### `webFrame.setIsolatedWorldHumanReadableName(worldId, name)`
-
-* `worldId` Integer - The ID of the world to run the javascript in, `0` is the default world, `999` is the world used by Electrons `contextIsolation` feature.  You can provide any integer here.
-* `name` String
-
-Set the name of the isolated world. Useful in devtools.
-
-### `webFrame.setIsolatedWorldSecurityOrigin(worldId, securityOrigin)`
-
-* `worldId` Integer - The ID of the world to run the javascript in, `0` is the default world, `999` is the world used by Electrons `contextIsolation` feature.  You can provide any integer here.
-* `securityOrigin` String
-
-Set the security origin of the isolated world.
+Set the security origin, content security policy and name of the isolated world.
+Note: If the `csp` is specified, then the `securityOrigin` also has to be specified.
 
 ### `webFrame.getResourceUsage()`
 
@@ -245,35 +232,35 @@ Returns `WebFrame` - that has the supplied `routingId`, `null` if not found.
 
 ## Properties
 
-### `webFrame.top`
+### `webFrame.top` _Readonly_
 
-A `WebFrame` representing top frame in frame hierarchy to which `webFrame`
+A `WebFrame | null` representing top frame in frame hierarchy to which `webFrame`
 belongs, the property would be `null` if top frame is not in the current
 renderer process.
 
-### `webFrame.opener`
+### `webFrame.opener` _Readonly_
 
-A `WebFrame` representing the frame which opened `webFrame`, the property would
+A `WebFrame | null` representing the frame which opened `webFrame`, the property would
 be `null` if there's no opener or opener is not in the current renderer process.
 
-### `webFrame.parent`
+### `webFrame.parent` _Readonly_
 
-A `WebFrame` representing parent frame of `webFrame`, the property would be
+A `WebFrame | null` representing parent frame of `webFrame`, the property would be
 `null` if `webFrame` is top or parent is not in the current renderer process.
 
-### `webFrame.firstChild`
+### `webFrame.firstChild` _Readonly_
 
-A `WebFrame` representing the first child frame of `webFrame`, the property
+A `WebFrame | null` representing the first child frame of `webFrame`, the property
 would be `null` if `webFrame` has no children or if first child is not in the
 current renderer process.
 
-### `webFrame.nextSibling`
+### `webFrame.nextSibling` _Readonly_
 
-A `WebFrame` representing next sibling frame, the property would be `null` if
+A `WebFrame | null` representing next sibling frame, the property would be `null` if
 `webFrame` is the last frame in its parent or if the next sibling is not in the
 current renderer process.
 
-### `webFrame.routingId`
+### `webFrame.routingId` _Readonly_
 
 An `Integer` representing the unique frame id in the current renderer process.
 Distinct WebFrame instances that refer to the same underlying frame will have

@@ -1,10 +1,8 @@
 const { app } = require('electron')
 
-app.on('ready', () => {
+app.whenReady().then(() => {
   process.stdout.write(app.getLocale())
   process.stdout.end()
 
-  setImmediate(() => {
-    app.quit()
-  })
+  app.quit()
 })

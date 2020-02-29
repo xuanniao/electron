@@ -12,9 +12,12 @@ const FIVE_MINUTES = 5 * 60 * 1000
 
 let window
 
-app.once('ready', () => {
+app.whenReady().then(() => {
   window = new BrowserWindow({
-    show: false
+    show: false,
+    webPreferences: {
+      nodeIntegration: true
+    }
   })
 
   window.webContents.on('crashed', (event, killed) => {
@@ -22,7 +25,7 @@ app.once('ready', () => {
     app.exit(1)
   })
 
-  window.loadFile(path.resolve(__dirname, 'asar', 'video.asar', 'index.html'))
+  window.loadFile(path.resolve(__dirname, 'test.asar', 'video.asar', 'index.html'))
 
   ipcMain.on('asar-video', (event, message, error) => {
     if (message === 'ended') {

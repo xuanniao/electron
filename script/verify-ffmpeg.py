@@ -1,6 +1,8 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import argparse
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -45,14 +47,17 @@ def main():
     env['ELECTRON_ENABLE_STACK_DUMPING'] = 'true'
     # FIXME: Enable after ELECTRON_ENABLE_LOGGING works again
     # env['ELECTRON_ENABLE_LOGGING'] = 'true'
-    subprocess.check_call([electron, test_path] + sys.argv[1:], env=env)
+    testargs = [electron, test_path]
+    if sys.platform == 'win32' and platform.machine() == 'ARM64':
+      testargs.append('--disable-accelerated-video-decode')
+    subprocess.check_call(testargs, env=env)
   except subprocess.CalledProcessError as e:
     returncode = e.returncode
   except KeyboardInterrupt:
     returncode = 0
 
   if returncode == 0:
-    print 'ok Non proprietary ffmpeg does not contain proprietary codes.'
+    print('ok Non proprietary ffmpeg does not contain proprietary codes.')
   return returncode
 
 

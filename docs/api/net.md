@@ -21,17 +21,14 @@ module instead of the native Node.js modules:
 * Support for traffic monitoring proxies: Fiddler-like proxies used for access
   control and monitoring.
 
-The `net` module API has been specifically designed to mimic, as closely as
-possible, the familiar Node.js API. The API components including classes,
-methods, properties and event names are similar to those commonly used in
+The API components (including classes, methods, properties and event names) are similar to those used in
 Node.js.
 
-For instance, the following example quickly shows how the `net` API might be
-used:
+Example usage:
 
 ```javascript
 const { app } = require('electron')
-app.on('ready', () => {
+app.whenReady().then(() => {
   const { net } = require('electron')
   const request = net.request('https://github.com')
   request.on('response', (response) => {
@@ -48,10 +45,6 @@ app.on('ready', () => {
 })
 ```
 
-By the way, it is almost identical to how you would normally use the
-[HTTP](https://nodejs.org/api/http.html)/[HTTPS](https://nodejs.org/api/https.html)
-modules of Node.js
-
 The `net` API can be used only after the application emits the `ready` event.
 Trying to use the module before the `ready` event will throw an error.
 
@@ -61,7 +54,7 @@ The `net` module has the following methods:
 
 ### `net.request(options)`
 
-* `options` (Object | String) - The `ClientRequest` constructor options.
+* `options` (ClientRequestConstructorOptions | String) - The `ClientRequest` constructor options.
 
 Returns [`ClientRequest`](./client-request.md)
 

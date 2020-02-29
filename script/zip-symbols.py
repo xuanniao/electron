@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import argparse
 import glob
 import os
@@ -24,7 +25,7 @@ def main():
   licenses = ['LICENSE', 'LICENSES.chromium.html', 'version']
 
   with scoped_cwd(args.build_dir):
-    dirs = ['{0}.breakpad.syms'.format(PROJECT_NAME)]
+    dirs = ['breakpad_symbols']
     print('Making symbol zip: ' + zip_file)
     make_zip(zip_file, licenses, dirs)
 
@@ -42,6 +43,13 @@ def main():
       pdb_zip_file = os.path.join(args.build_dir, pdb_name)
       print('Making pdb zip: ' + pdb_zip_file)
       make_zip(pdb_zip_file, pdbs + licenses, [])
+  elif PLATFORM == 'linux':
+    debug_name = 'debug.zip'
+    with scoped_cwd(args.build_dir):
+      dirs = ['debug']
+      debug_zip_file = os.path.join(args.build_dir, debug_name)
+      print('Making debug zip: ' + debug_zip_file)
+      make_zip(debug_zip_file, licenses, dirs)
 
 def parse_args():
   parser = argparse.ArgumentParser(description='Zip symbols')

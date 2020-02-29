@@ -22,39 +22,33 @@ The `shell` module has the following methods:
 
 * `fullPath` String
 
-Returns `Boolean` - Whether the item was successfully shown.
-
 Show the given file in a file manager. If possible, select the file.
 
-### `shell.openItem(fullPath)`
+### `shell.openPath(path)`
 
-* `fullPath` String
+* `path` String
 
-Returns `Boolean` - Whether the item was successfully opened.
+Returns `Promise<String>` - Resolves with an string containing the error message corresponding to the failure if a failure occurred, otherwise "".
 
 Open the given file in the desktop's default manner.
 
-### `shell.openExternal(url[, options, callback])`
+### `shell.openExternal(url[, options])`
 
-* `url` String - Max 2081 characters on windows, or the function returns false.
+* `url` String - Max 2081 characters on windows.
 * `options` Object (optional)
-  * `activate` Boolean (optional) - `true` to bring the opened application to the
-    foreground. The default is `true`. _macOS_
-  * `workingDirectory` String (optional) - The working directory. _Windows_
-* `callback` Function (optional) _macOS_ - If specified will perform the open asynchronously.
-  * `error` Error
+  * `activate` Boolean (optional) _macOS_ - `true` to bring the opened application to the foreground. The default is `true`.
+  * `workingDirectory` String (optional) _Windows_ - The working directory.
 
-Returns `Boolean` - Whether an application was available to open the URL.
-If callback is specified, always returns true.
+Returns `Promise<void>`
 
-Open the given external protocol URL in the desktop's default manner. (For
-example, mailto: URLs in the user's default mail agent).
+Open the given external protocol URL in the desktop's default manner. (For example, mailto: URLs in the user's default mail agent).
 
-### `shell.moveItemToTrash(fullPath)`
+### `shell.moveItemToTrash(fullPath[, deleteOnFail])`
 
 * `fullPath` String
+* `deleteOnFail` Boolean (optional) - Whether or not to unilaterally remove the item if the Trash is disabled or unsupported on the volume. _macOS_
 
-Returns `Boolean` - Whether the item was successfully moved to the trash.
+Returns `Boolean` - Whether the item was successfully moved to the trash or otherwise deleted.
 
 Move the given file to trash and returns a boolean status for the operation.
 

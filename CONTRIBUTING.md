@@ -20,13 +20,23 @@ Issues are created [here](https://github.com/electron/electron/issues/new).
 * [Triaging a Bug Report](https://electronjs.org/docs/development/issues#triaging-a-bug-report)
 * [Resolving a Bug Report](https://electronjs.org/docs/development/issues#resolving-a-bug-report)
 
-### Issue Maintenance and Closure
-* If an issue is inactive for 45 days (no activity of any kind), it will be
-marked for closure with `stale`.
-* If after this label is applied, no further activity occurs in the next 7 days,
-the issue will be closed.
-  * If an issue has been closed and you still feel it's relevant, feel free to
-  ping a maintainer or add a comment!
+### Issue Closure
+
+Bug reports will be closed if the issue has been inactive and the latest affected version no longer receives support. At the moment, Electron maintains its three latest major versions, with a new major version being released every 12 weeks. (For more information on Electron's release cadence, see [this blog post](https://electronjs.org/blog/12-week-cadence).)
+
+_If an issue has been closed and you still feel it's relevant, feel free to ping a maintainer or add a comment!_
+
+### Languages
+
+We accept issues in *any* language.
+When an issue is posted in a language besides English, it is acceptable and encouraged to post an English-translated copy as a reply. 
+Anyone may post the translated reply.
+In most cases, a quick pass through translation software is sufficient.
+Having the original text _as well as_ the translation can help mitigate translation errors.
+
+Responses to posted issues may or may not be in the original language.
+
+**Please note** that using non-English as an attempt to circumvent our [Code of Conduct](https://github.com/electron/electron/blob/master/CODE_OF_CONDUCT.md) will be an immediate, and possibly indefinite, ban from the project.
 
 ## [Pull Requests](https://electronjs.org/docs/development/pull-requests)
 

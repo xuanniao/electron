@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jeremy Apthorp <nornagon@nornagon.net>
+Date: Thu, 20 Sep 2018 17:48:38 -0700
+Subject: gtk_visibility.patch
+
+Allow electron to depend on GTK in the GN build.
+
+diff --git a/build/config/linux/gtk/BUILD.gn b/build/config/linux/gtk/BUILD.gn
+index a58b089869b7db19d0af81de7120c5af964efc2f..ca4d44ca2a659af9c2c2781c7e9bd4a6b8b70d6c 100644
+--- a/build/config/linux/gtk/BUILD.gn
++++ b/build/config/linux/gtk/BUILD.gn
+@@ -26,6 +26,7 @@ group("gtk") {
+   visibility = [
+     "//chrome/test:interactive_ui_tests",
+     "//chrome/test:unit_tests",
++    "//electron:*",
+     "//examples:peerconnection_client",
+     "//gpu/gles2_conform_support:gles2_conform_test_windowless",
+     "//remoting/host/linux",

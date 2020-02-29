@@ -18,7 +18,7 @@ method, i.e.
 ```javascript
 const { app, globalShortcut } = require('electron')
 
-app.on('ready', () => {
+app.whenReady().then(() => {
   // Register a 'CommandOrControl+Y' shortcut listener.
   globalShortcut.register('CommandOrControl+Y', () => {
     // Do stuff when Y and either Command/Control is pressed.
@@ -58,6 +58,9 @@ The `Super` key is mapped to the `Windows` key on Windows and Linux and
 * `Plus`
 * `Space`
 * `Tab`
+* `Capslock`
+* `Numlock`
+* `Scrolllock`
 * `Backspace`
 * `Delete`
 * `Insert`
@@ -69,3 +72,10 @@ The `Super` key is mapped to the `Windows` key on Windows and Linux and
 * `VolumeUp`, `VolumeDown` and `VolumeMute`
 * `MediaNextTrack`, `MediaPreviousTrack`, `MediaStop` and `MediaPlayPause`
 * `PrintScreen`
+* NumPad Keys
+  * `num0` - `num9`
+  * `numdec` - decimal key
+  * `numadd` - numpad `+` key
+  * `numsub` - numpad `-` key
+  * `nummult` - numpad `*` key
+  * `numdiv` - numpad `÷` key

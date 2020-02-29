@@ -13,8 +13,12 @@ It adds the following events, properties, and methods:
 In sandboxed renderers the `process` object contains only a subset of the APIs:
 - `crash()`
 - `hang()`
+- `getCreationTime()`
 - `getHeapStatistics()`
+- `getBlinkMemoryInfo()`
+- `getProcessMemoryInfo()`
 - `getSystemMemoryInfo()`
+- `getSystemVersion()`
 - `getCPUUsage()`
 - `getIOCounters()`
 - `argv`
@@ -23,7 +27,6 @@ In sandboxed renderers the `process` object contains only a subset of the APIs:
 - `pid`
 - `arch`
 - `platform`
-- `resourcesPath`
 - `sandboxed`
 - `type`
 - `version`
@@ -53,12 +56,17 @@ process.once('loaded', () => {
 
 ## Properties
 
-### `process.defaultApp`
+### `process.defaultApp` _Readonly_
 
 A `Boolean`. When app is started by being passed as parameter to the default app, this
 property is `true` in the main process, otherwise it is `undefined`.
 
-### `process.mas`
+### `process.isMainFrame` _Readonly_
+
+A `Boolean`, `true` when the current renderer context is the "main" renderer
+frame. If you want the ID of the current frame you should use `webFrame.routingId`.
+
+### `process.mas` _Readonly_
 
 A `Boolean`. For Mac App Store build, this property is `true`, for other builds it is
 `undefined`.
@@ -74,11 +82,11 @@ A `Boolean` that controls whether or not deprecation warnings are printed to `st
 Setting this to `true` will silence deprecation warnings. This property is used
 instead of the `--no-deprecation` command line flag.
 
-### `process.resourcesPath`
+### `process.resourcesPath` _Readonly_
 
 A `String` representing the path to the resources directory.
 
-### `process.sandboxed`
+### `process.sandboxed` _Readonly_
 
 A `Boolean`. When the renderer process is sandboxed, this property is `true`,
 otherwise it is `undefined`.
@@ -101,19 +109,19 @@ A `Boolean` that controls whether or not process warnings printed to `stderr` in
  (including deprecations). This property is instead of the `--trace-warnings` command
  line flag.
 
-### `process.type`
+### `process.type` _Readonly_
 
 A `String` representing the current process's type, can be `"browser"` (i.e. main process), `"renderer"`, or `"worker"` (i.e. web worker).
 
-### `process.versions.chrome`
+### `process.versions.chrome` _Readonly_
 
 A `String` representing Chrome's version string.
 
-### `process.versions.electron`
+### `process.versions.electron` _Readonly_
 
 A `String` representing Electron's version string.
 
-### `process.windowsStore`
+### `process.windowsStore` _Readonly_
 
 A `Boolean`. If the app is running as a Windows Store app (appx), this property is `true`,
 for otherwise it is `undefined`.
@@ -157,6 +165,32 @@ Returns `Object`:
 
 Returns an object with V8 heap statistics. Note that all statistics are reported in Kilobytes.
 
+### `process.getBlinkMemoryInfo()`
+
+Returns `Object`:
+
+* `allocated` Integer - Size of all allocated objects in Kilobytes.
+* `marked` Integer - Size of all marked objects in Kilobytes.
+* `total` Integer - Total allocated space in Kilobytes.
+
+Returns an object with Blink memory information.
+It can be useful for debugging rendering / DOM related memory issues.
+Note that all values are reported in Kilobytes.
+
+### `process.getProcessMemoryInfo()`
+
+Returns `Promise<ProcessMemoryInfo>` - Resolves with a [ProcessMemoryInfo](structures/process-memory-info.md)
+
+Returns an object giving memory usage statistics about the current process. Note
+that all statistics are reported in Kilobytes.
+This api should be called after app ready.
+
+Chromium does not provide `residentSet` value for macOS. This is because macOS
+performs in-memory compression of pages that haven't been recently used. As a
+result the resident set size value is not what one would expect. `private` memory
+is more representative of the actual pre-compression memory usage of the process
+on macOS.
+
 ### `process.getSystemMemoryInfo()`
 
 Returns `Object`:
@@ -172,6 +206,22 @@ Returns `Object`:
 
 Returns an object giving memory usage statistics about the entire system. Note
 that all statistics are reported in Kilobytes.
+
+### `process.getSystemVersion()`
+
+Returns `String` - The version of the host operating system.
+
+Example:
+
+```js
+const version = process.getSystemVersion()
+console.log(version)
+// On macOS -> '10.13.6'
+// On Windows -> '10.0.17763'
+// On Linux -> '4.15.0-45-generic'
+```
+
+**Note:** It returns the actual operating system version instead of kernel version on macOS unlike `os.release()`.
 
 ### `process.takeHeapSnapshot(filePath)`
 

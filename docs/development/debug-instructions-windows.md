@@ -36,7 +36,7 @@ To start a debugging session, open up PowerShell/CMD and execute your debug
 build of Electron, using the application to open as a parameter.
 
 ```powershell
-$ ./out/Debug/electron.exe ~/my-electron-app/
+$ ./out/Testing/electron.exe ~/my-electron-app/
 ```
 
 ### Setting Breakpoints
@@ -48,7 +48,7 @@ still set breakpoints - Visual Studio will automatically figure out that the
 source code matches the code running in the attached process and break
 accordingly.
 
-Relevant code files can be found in `./atom/`.
+Relevant code files can be found in `./shell/`.
 
 ### Attaching
 

@@ -23,7 +23,6 @@
 #include "chrome/browser/win/chrome_process_finder.h"
 #include "content/public/common/result_codes.h"
 #include "net/base/escape.h"
-#include "ui/base/l10n/l10n_util.h"
 #include "ui/gfx/win/hwnd_util.h"
 
 namespace {
@@ -75,19 +74,6 @@ BOOL CALLBACK BrowserWindowEnumeration(HWND window, LPARAM param) {
   *result = ::IsWindowVisible(window) != 0;
   // Stops enumeration if a visible window has been found.
   return !*result;
-}
-
-// Convert Command line string to argv.
-base::CommandLine::StringVector CommandLineStringToArgv(
-    const std::wstring& command_line_string) {
-  int num_args = 0;
-  wchar_t** args = NULL;
-  args = ::CommandLineToArgvW(command_line_string.c_str(), &num_args);
-  base::CommandLine::StringVector argv;
-  for (int i = 0; i < num_args; ++i)
-    argv.push_back(std::wstring(args[i]));
-  LocalFree(args);
-  return argv;
 }
 
 bool ParseCommandLine(const COPYDATASTRUCT* cds,
@@ -143,7 +129,7 @@ bool ParseCommandLine(const COPYDATASTRUCT* cds,
     // Get command line.
     const std::wstring cmd_line =
         msg.substr(second_null + 1, third_null - second_null);
-    *parsed_command_line = CommandLineStringToArgv(cmd_line);
+    *parsed_command_line = base::CommandLine::FromString(cmd_line).argv();
     return true;
   }
   return false;
@@ -189,7 +175,8 @@ ProcessSingleton::ProcessSingleton(
       is_virtualized_(false),
       lock_file_(INVALID_HANDLE_VALUE),
       user_data_dir_(user_data_dir),
-      should_kill_remote_process_callback_(base::Bind(&TerminateAppWithError)) {
+      should_kill_remote_process_callback_(
+          base::BindRepeating(&TerminateAppWithError)) {
   // The user_data_dir may have not been created yet.
   base::CreateDirectoryAndGetError(user_data_dir, nullptr);
 }
@@ -210,7 +197,7 @@ ProcessSingleton::NotifyResult ProcessSingleton::NotifyOtherProcess() {
     return PROCESS_NONE;
   }
 
-  switch (chrome::AttemptToNotifyRunningChrome(remote_window_, false)) {
+  switch (chrome::AttemptToNotifyRunningChrome(remote_window_)) {
     case chrome::NOTIFY_SUCCESS:
       return PROCESS_NOTIFIED;
     case chrome::NOTIFY_FAILED:
@@ -303,9 +290,10 @@ bool ProcessSingleton::Create() {
       if (lock_file_ != INVALID_HANDLE_VALUE) {
         // Set the window's title to the path of our user data directory so
         // other Chrome instances can decide if they should forward to us.
-        bool result = window_.CreateNamed(
-            base::Bind(&ProcessLaunchNotification, notification_callback_),
-            user_data_dir_.value());
+        bool result =
+            window_.CreateNamed(base::BindRepeating(&ProcessLaunchNotification,
+                                                    notification_callback_),
+                                user_data_dir_.value());
 
         // NB: Ensure that if the primary app gets started as elevated
         // admin inadvertently, secondary windows running not as elevated

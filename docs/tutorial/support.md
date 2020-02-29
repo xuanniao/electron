@@ -3,7 +3,7 @@
 ## Finding Support
 
 If you have a security concern,
-please see the [security document](../../SECURITY.md).
+please see the [security document](https://github.com/electron/electron/tree/master/SECURITY.md).
 
 If you're looking for programming help,
 for answers to questions,
@@ -12,7 +12,7 @@ you can interact with the community in these locations:
 - [`electron`](https://discuss.atom.io/c/electron) category on the Atom
 forums
 - `#atom-shell` channel on Freenode
-- [`Electron`](https://atom-slack.herokuapp.com) channel on Atom's Slack
+- `#electron` channel on [Atom's Slack](https://discuss.atom.io/t/join-us-on-slack/16638?source_topic_id=25406)
 - [`electron-ru`](https://telegram.me/electron_ru) *(Russian)*
 - [`electron-br`](https://electron-br.slack.com) *(Brazilian Portuguese)*
 - [`electron-kr`](https://electron-kr.github.io/electron-kr) *(Korean)*
@@ -22,7 +22,7 @@ forums
 - [`electron-pl`](https://electronpl.github.io) *(Poland)*
 
 If you'd like to contribute to Electron,
-see the [contributing document](../../CONTRIBUTING.md).
+see the [contributing document](https://github.com/electron/electron/blob/master/CONTRIBUTING.md).
 
 If you've found a bug in a [supported version](#supported-versions) of Electron,
 please report it with the [issue tracker](../development/issues.md).
@@ -33,9 +33,26 @@ tools and resources.
 
 ## Supported Versions
 
-The latest three release branches are supported by the Electron team.
-For example, if the latest release is 2.0.x, then the 2-0-x series
-is supported, as are the two previous release series 1-7-x and 1-8-x.
+The latest three *stable* major versions are supported by the Electron team.
+For example, if the latest release is 6.x.y, then the 5.x.y as well
+as the 4.x.y series are supported.
+
+The latest stable release unilaterally receives all fixes from `master`,
+and the version prior to that receives the vast majority of those fixes
+as time and bandwidth warrants. The oldest supported release line will receive
+only security fixes directly.
+
+All supported release lines will accept external pull requests to backport
+fixes previously merged to `master`, though this may be on a case-by-case
+basis for some older supported lines. All contested decisions around release
+line backports will be resolved by the [Releases Working Group](https://github.com/electron/governance/tree/master/wg-releases) as an agenda item at their weekly meeting the week the backport PR is raised.
+
+### Currently supported versions
+- 8.x.y
+- 7.x.y
+- 6.x.y
+
+### End-of-life
 
 When a release branch reaches the end of its support cycle, the series
 will be deprecated in NPM and a final end-of-support release will be
@@ -69,8 +86,8 @@ Windows 7 and later are supported, older operating systems are not supported
 (and do not work).
 
 Both `ia32` (`x86`) and `x64` (`amd64`) binaries are provided for Windows.
-Running Electron apps on Windows for ARM devices is possible by using the
-ia32 binary.
+[Electron 6.0.8 and later add native support for Windows on Arm (`arm64`) devices](windows-arm.md).
+Running apps packaged with previous versions is possible using the ia32 binary.
 
 ### Linux
 
@@ -91,4 +108,4 @@ are also verified to be able to run the prebuilt binaries of Electron:
 * Fedora 21
 * Debian 8
 
-[arm-breaking-change]: https://github.com/electron/electron/blob/master/docs/api/breaking-changes.md#duplicate-arm-assets
+[arm-breaking-change]: ../breaking-changes.md#duplicate-arm-assets

@@ -8,6 +8,12 @@ including rendering, navigation, and event routing. We currently recommend to no
 use the `webview` tag and to consider alternatives, like `iframe`, Electron's `BrowserView`,
 or an architecture that avoids embedded content altogether.
 
+## Enabling
+
+By default the `webview` tag is disabled in Electron >= 5.  You need to enable the tag by
+setting the `webviewTag` webPreferences option when constructing your `BrowserWindow`. For
+more information see the [BrowserWindow constructor docs](browser-window.md).
+
 ## Overview
 
 > Display external web content in an isolated frame and process.
@@ -73,7 +79,7 @@ examples:
 
 * When clicking into a `webview`, the page focus will move from the embedder
   frame to `webview`.
-* You can not add keyboard event listeners to `webview`.
+* You can not add keyboard, mouse, and scroll event listeners to `webview`.
 * All reactions between the embedder frame and `webview` are asynchronous.
 
 ## CSS Styling Notes
@@ -94,7 +100,7 @@ The `webview` tag has the following attributes:
 <webview src="https://www.github.com/"></webview>
 ```
 
-Returns the visible URL. Writing to this attribute initiates top-level
+A `String` representing the visible URL. Writing to this attribute initiates top-level
 navigation.
 
 Assigning `src` its own value will reload the current page.
@@ -102,29 +108,27 @@ Assigning `src` its own value will reload the current page.
 The `src` attribute can also accept data URLs, such as
 `data:text/plain,Hello, world!`.
 
-### `autosize`
-
-```html
-<webview src="https://www.github.com/" autosize minwidth="576" minheight="432"></webview>
-```
-
-When this attribute is present the `webview` container will automatically resize
-within the bounds specified by the attributes `minwidth`, `minheight`,
-`maxwidth`, and `maxheight`. These constraints do not impact the `webview`
-unless `autosize` is enabled. When `autosize` is enabled, the `webview`
-container size cannot be less than the minimum values or greater than the
-maximum.
-
 ### `nodeintegration`
 
 ```html
 <webview src="http://www.google.com/" nodeintegration></webview>
 ```
 
-When this attribute is present the guest page in `webview` will have node
+A `Boolean`. When this attribute is present the guest page in `webview` will have node
 integration and can use node APIs like `require` and `process` to access low
 level system resources. Node integration is disabled by default in the guest
 page.
+
+### `nodeintegrationinsubframes`
+
+```html
+<webview src="http://www.google.com/" nodeintegrationinsubframes></webview>
+```
+
+A `Boolean` for the experimental option for enabling NodeJS support in sub-frames such as iframes
+inside the `webview`. All your preloads will load for every iframe, you can
+use `process.isMainFrame` to determine if you are in the main frame or not.
+This option is disabled by default in the guest page.
 
 ### `enableremotemodule`
 
@@ -132,8 +136,8 @@ page.
 <webview src="http://www.google.com/" enableremotemodule="false"></webview>
 ```
 
-When this attribute is `false` the guest page in `webview` will not have access
-to the [`remote`](remote.md) module. The remote module is avaiable by default.
+A `Boolean`. When this attribute is `false` the guest page in `webview` will not have access
+to the [`remote`](remote.md) module. The remote module is available by default.
 
 ### `plugins`
 
@@ -141,7 +145,7 @@ to the [`remote`](remote.md) module. The remote module is avaiable by default.
 <webview src="https://www.github.com/" plugins></webview>
 ```
 
-When this attribute is present the guest page in `webview` will be able to use
+A `Boolean`. When this attribute is present the guest page in `webview` will be able to use
 browser plugins. Plugins are disabled by default.
 
 ### `preload`
@@ -150,7 +154,7 @@ browser plugins. Plugins are disabled by default.
 <webview src="https://www.github.com/" preload="./test.js"></webview>
 ```
 
-Specifies a script that will be loaded before other scripts run in the guest
+A `String` that specifies a script that will be loaded before other scripts run in the guest
 page. The protocol of script's URL must be either `file:` or `asar:`, because it
 will be loaded by `require` in guest page under the hood.
 
@@ -158,7 +162,7 @@ When the guest page doesn't have node integration this script will still have
 access to all Node APIs, but global objects injected by Node will be deleted
 after this script has finished executing.
 
-**Note:** This option will be appear as `preloadURL` (not `preload`) in
+**Note:** This option will appear as `preloadURL` (not `preload`) in
 the `webPreferences` specified to the `will-attach-webview` event.
 
 ### `httpreferrer`
@@ -167,7 +171,7 @@ the `webPreferences` specified to the `will-attach-webview` event.
 <webview src="https://www.github.com/" httpreferrer="http://cheng.guru"></webview>
 ```
 
-Sets the referrer URL for the guest page.
+A `String` that sets the referrer URL for the guest page.
 
 ### `useragent`
 
@@ -175,7 +179,7 @@ Sets the referrer URL for the guest page.
 <webview src="https://www.github.com/" useragent="Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko"></webview>
 ```
 
-Sets the user agent for the guest page before the page is navigated to. Once the
+A `String` that sets the user agent for the guest page before the page is navigated to. Once the
 page is loaded, use the `setUserAgent` method to change the user agent.
 
 ### `disablewebsecurity`
@@ -184,7 +188,7 @@ page is loaded, use the `setUserAgent` method to change the user agent.
 <webview src="https://www.github.com/" disablewebsecurity></webview>
 ```
 
-When this attribute is present the guest page will have web security disabled.
+A `Boolean`. When this attribute is present the guest page will have web security disabled.
 Web security is enabled by default.
 
 ### `partition`
@@ -194,7 +198,7 @@ Web security is enabled by default.
 <webview src="https://electronjs.org" partition="electron"></webview>
 ```
 
-Sets the session used by the page. If `partition` starts with `persist:`, the
+A `String` that sets the session used by the page. If `partition` starts with `persist:`, the
 page will use a persistent session available to all pages in the app with the
 same `partition`. if there is no `persist:` prefix, the page will use an
 in-memory session. By assigning the same `partition`, multiple pages can share
@@ -211,7 +215,7 @@ value will fail with a DOM exception.
 <webview src="https://www.github.com/" allowpopups></webview>
 ```
 
-When this attribute is present the guest page will be allowed to open new
+A `Boolean`. When this attribute is present the guest page will be allowed to open new
 windows. Popups are disabled by default.
 
 ### `webpreferences`
@@ -220,7 +224,7 @@ windows. Popups are disabled by default.
 <webview src="https://github.com" webpreferences="allowRunningInsecureContent, javascript=no"></webview>
 ```
 
-A list of strings which specifies the web preferences to be set on the webview, separated by `,`.
+A `String` which is a comma separated list of strings which specifies the web preferences to be set on the webview.
 The full list of supported preference strings can be found in [BrowserWindow](browser-window.md#new-browserwindowoptions).
 
 The string follows the same format as the features string in `window.open`.
@@ -234,7 +238,7 @@ Special values `yes` and `1` are interpreted as `true`, while `no` and `0` are i
 <webview src="https://www.github.com/" enableblinkfeatures="PreciseMemoryInfo, CSSVariables"></webview>
 ```
 
-A list of strings which specifies the blink features to be enabled separated by `,`.
+A `String` which is a list of strings which specifies the blink features to be enabled separated by `,`.
 The full list of supported feature strings can be found in the
 [RuntimeEnabledFeatures.json5][runtime-enabled-features] file.
 
@@ -244,7 +248,7 @@ The full list of supported feature strings can be found in the
 <webview src="https://www.github.com/" disableblinkfeatures="PreciseMemoryInfo, CSSVariables"></webview>
 ```
 
-A list of strings which specifies the blink features to be disabled separated by `,`.
+A `String` which is a list of strings which specifies the blink features to be disabled separated by `,`.
 The full list of supported feature strings can be found in the
 [RuntimeEnabledFeatures.json5][runtime-enabled-features] file.
 
@@ -272,6 +276,11 @@ webview.addEventListener('dom-ready', () => {
   * `extraHeaders` String (optional) - Extra headers separated by "\n"
   * `postData` ([UploadRawData[]](structures/upload-raw-data.md) | [UploadFile[]](structures/upload-file.md) | [UploadBlob[]](structures/upload-blob.md)) (optional)
   * `baseURLForDataURL` String (optional) - Base url (with trailing path separator) for files to be loaded by the data url. This is needed only if the specified `url` is a data url and needs to load other files.
+
+Returns `Promise<void>` - The promise will resolve when the page has finished loading
+(see [`did-finish-load`](webview-tag.md#event-did-finish-load)), and rejects
+if the page fails to load (see
+[`did-fail-load`](webview-tag.md#event-did-fail-load)).
 
 Loads the `url` in the webview, the `url` must contain the protocol prefix,
 e.g. the `http://` or `file://`.
@@ -372,14 +381,29 @@ Returns `String` - The user agent for guest page.
 
 * `css` String
 
-Injects CSS into the guest page.
+Returns `Promise<String>` - A promise that resolves with a key for the inserted
+CSS that can later be used to remove the CSS via
+`<webview>.removeInsertedCSS(key)`.
 
-### `<webview>.executeJavaScript(code[, userGesture, callback])`
+Injects CSS into the current web page and returns a unique key for the inserted
+stylesheet.
+
+### `<webview>.removeInsertedCSS(key)`
+
+* `key` String
+
+Returns `Promise<void>` - Resolves if the removal was successful.
+
+Removes the inserted CSS from the current web page. The stylesheet is identified
+by its key, which is returned from `<webview>.insertCSS(css)`.
+
+### `<webview>.executeJavaScript(code[, userGesture])`
 
 * `code` String
 * `userGesture` Boolean (optional) - Default `false`.
-* `callback` Function (optional) - Called after script has been executed.
-  * `result` Any
+
+Returns `Promise<any>` - A promise that resolves with the result of the executed code
+or is rejected if the result of the code is a rejected promise.
 
 Evaluates `code` in page. If `userGesture` is set, it will create the user
 gesture context in the page. HTML APIs like `requestFullScreen`, which require
@@ -407,6 +431,10 @@ Returns `Boolean` - Whether DevTools window of guest page is focused.
 * `y` Integer
 
 Starts inspecting element at position (`x`, `y`) of guest page.
+
+### `<webview>.inspectSharedWorker()`
+
+Opens the DevTools for the shared worker context present in the guest page.
 
 ### `<webview>.inspectServiceWorker()`
 
@@ -478,6 +506,8 @@ Executes editing command `replaceMisspelling` in page.
 
 * `text` String
 
+Returns `Promise<void>`
+
 Inserts `text` to the focused element.
 
 ### `<webview>.findInPage(text[, options])`
@@ -515,56 +545,91 @@ Stops any `findInPage` request for the `webview` with the provided `action`.
 
 * `options` Object (optional)
   * `silent` Boolean (optional) - Don't ask user for print settings. Default is `false`.
-  * `printBackground` Boolean (optional) - Also prints the background color and image of
+  * `printBackground` Boolean (optional) - Prints the background color and image of
     the web page. Default is `false`.
-  * `deviceName` String (optional) - Set the printer device name to use. Default is `''`.
+  * `deviceName` String (optional) - Set the printer device name to use. Must be the system-defined name and not the 'friendly' name, e.g 'Brother_QL_820NWB' and not 'Brother QL-820NWB'.
+  * `color` Boolean (optional) - Set whether the printed web page will be in color or grayscale. Default is `true`.
+  * `margins` Object (optional)
+    * `marginType` String (optional) - Can be `default`, `none`, `printableArea`, or `custom`. If `custom` is chosen, you will also need to specify `top`, `bottom`, `left`, and `right`.
+    * `top` Number (optional) - The top margin of the printed web page, in pixels.
+    * `bottom` Number (optional) - The bottom margin of the printed web page, in pixels.
+    * `left` Number (optional) - The left margin of the printed web page, in pixels.
+    * `right` Number (optional) - The right margin of the printed web page, in pixels.
+  * `landscape` Boolean (optional) - Whether the web page should be printed in landscape mode. Default is `false`.
+  * `scaleFactor` Number (optional) - The scale factor of the web page.
+  * `pagesPerSheet` Number (optional) - The number of pages to print per page sheet.
+  * `collate` Boolean (optional) - Whether the web page should be collated.
+  * `copies` Number (optional) - The number of copies of the web page to print.
+  * `pageRanges` Record<string, number> (optional) - The page range to print.
+    * `from` Number - the start page.
+    * `to` Number - the end page.
+  * `duplexMode` String (optional) - Set the duplex mode of the printed web page. Can be `simplex`, `shortEdge`, or `longEdge`.
+  * `dpi` Record<string, number> (optional)
+    * `horizontal` Number (optional) - The horizontal dpi.
+    * `vertical` Number (optional) - The vertical dpi.
+  * `header` String (optional) - String to be printed as page header.
+  * `footer` String (optional) - String to be printed as page footer.
+  * `pageSize` String | Size (optional) - Specify page size of the printed document. Can be `A3`,
+  `A4`, `A5`, `Legal`, `Letter`, `Tabloid` or an Object containing `height`.
+
+Returns `Promise<void>`
 
 Prints `webview`'s web page. Same as `webContents.print([options])`.
 
-### `<webview>.printToPDF(options, callback)`
+### `<webview>.printToPDF(options)`
 
 * `options` Object
+  * `headerFooter` Record<string, string> (optional) - the header and footer for the PDF.
+    * `title` String - The title for the PDF header.
+    * `url` String - the url for the PDF footer.
+  * `landscape` Boolean (optional) - `true` for landscape, `false` for portrait.
   * `marginsType` Integer (optional) - Specifies the type of margins to use. Uses 0 for
     default margin, 1 for no margin, and 2 for minimum margin.
-  * `pageSize` String | Size (optional) - Specify page size of the generated PDF. Can be `A3`,
-    `A4`, `A5`, `Legal`, `Letter`, `Tabloid` or an Object containing `height`
     and `width` in microns.
+  * `scaleFactor` Number (optional) - The scale factor of the web page. Can range from 0 to 100.
+  * `pageRanges` Record<string, number> (optional) - The page range to print.
+    * `from` Number - the first page to print.
+    * `to` Number - the last page to print (inclusive).
+  * `pageSize` String | Size (optional) - Specify page size of the generated PDF. Can be `A3`,
+  `A4`, `A5`, `Legal`, `Letter`, `Tabloid` or an Object containing `height`
   * `printBackground` Boolean (optional) - Whether to print CSS backgrounds.
   * `printSelectionOnly` Boolean (optional) - Whether to print selection only.
-  * `landscape` Boolean (optional) - `true` for landscape, `false` for portrait.
-* `callback` Function
-  * `error` Error
-  * `data` Buffer
 
-Prints `webview`'s web page as PDF, Same as `webContents.printToPDF(options, callback)`.
+Returns `Promise<Uint8Array>` - Resolves with the generated PDF data.
 
-### `<webview>.capturePage([rect, ]callback)`
+Prints `webview`'s web page as PDF, Same as `webContents.printToPDF(options)`.
+
+### `<webview>.capturePage([rect])`
 
 * `rect` [Rectangle](structures/rectangle.md) (optional) - The area of the page to be captured.
-* `callback` Function
-  * `image` [NativeImage](native-image.md)
 
-Captures a snapshot of the `webview`'s page. Same as `webContents.capturePage([rect, ]callback)`.
+Returns `Promise<NativeImage>` - Resolves with a [NativeImage](native-image.md)
 
-### `<webview>.send(channel[, arg1][, arg2][, ...])`
+Captures a snapshot of the page within `rect`. Omitting `rect` will capture the whole visible page.
+
+### `<webview>.send(channel, ...args)`
 
 * `channel` String
 * `...args` any[]
+
+Returns `Promise<void>`
 
 Send an asynchronous message to renderer process via `channel`, you can also
 send arbitrary arguments. The renderer process can handle the message by
 listening to the `channel` event with the [`ipcRenderer`](ipc-renderer.md) module.
 
-See [webContents.send](web-contents.md#contentssendchannel-arg1-arg2-) for
+See [webContents.send](web-contents.md#contentssendchannel-args) for
 examples.
 
 ### `<webview>.sendInputEvent(event)`
 
-* `event` Object
+* `event`  [MouseInputEvent](structures/mouse-input-event.md) | [MouseWheelInputEvent](structures/mouse-wheel-input-event.md) | [KeyboardInputEvent](structures/keyboard-input-event.md)
+
+Returns `Promise<void>`
 
 Sends an input `event` to the page.
 
-See [webContents.sendInputEvent](web-contents.md#contentssendinputeventevent)
+See [webContents.sendInputEvent](web-contents.md#contentssendinputeventinputevent)
 for detailed description of `event` object.
 
 ### `<webview>.setZoomFactor(factor)`
@@ -583,49 +648,32 @@ increment above or below represents zooming 20% larger or smaller to default
 limits of 300% and 50% of original size, respectively. The formula for this is
 `scale := 1.2 ^ level`.
 
-### `<webview>.getZoomFactor(callback)`
+### `<webview>.getZoomFactor()`
 
-* `callback` Function
-  * `zoomFactor` Number
+Returns `Number` - the current zoom factor.
 
-Sends a request to get current zoom factor, the `callback` will be called with
-`callback(zoomFactor)`.
+### `<webview>.getZoomLevel()`
 
-### `<webview>.getZoomLevel(callback)`
-
-* `callback` Function
-  * `zoomLevel` Number
-
-Sends a request to get current zoom level, the `callback` will be called with
-`callback(zoomLevel)`.
+Returns `Number` - the current zoom level.
 
 ### `<webview>.setVisualZoomLevelLimits(minimumLevel, maximumLevel)`
 
 * `minimumLevel` Number
 * `maximumLevel` Number
 
+Returns `Promise<void>`
+
 Sets the maximum and minimum pinch-to-zoom level.
-
-### `<webview>.setLayoutZoomLevelLimits(minimumLevel, maximumLevel)`
-
-* `minimumLevel` Number
-* `maximumLevel` Number
-
-Sets the maximum and minimum layout-based (i.e. non-visual) zoom level.
 
 ### `<webview>.showDefinitionForSelection()` _macOS_
 
 Shows pop-up dictionary that searches the selected word on the page.
 
-### `<webview>.getWebContents()`
+### `<webview>.getWebContentsId()`
 
-Returns [`WebContents`](web-contents.md) - The web contents associated with
-this `webview`.
+Returns `Number` - The WebContents ID of this `webview`.
 
-It depends on the [`remote`](remote.md) module,
-it is therefore not available when this module is disabled.
-
-## DOM events
+## DOM Events
 
 The following DOM events are available to the `webview` tag:
 
@@ -732,7 +780,7 @@ Returns:
   * `requestId` Integer
   * `activeMatchOrdinal` Integer - Position of the active match.
   * `matches` Integer - Number of Matches.
-  * `selectionArea` Object - Coordinates of first match region.
+  * `selectionArea` Rectangle - Coordinates of first match region.
   * `finalUpdate` Boolean
 
 Fired when a result is available for
@@ -756,7 +804,7 @@ Returns:
 * `frameName` String
 * `disposition` String - Can be `default`, `foreground-tab`, `background-tab`,
   `new-window`, `save-to-disk` and `other`.
-* `options` Object - The options which should be used for creating the new
+* `options` BrowserWindowConstructorOptions - The options which should be used for creating the new
   [`BrowserWindow`](browser-window.md).
 
 Fired when the guest page attempts to open a new browser window.
@@ -767,10 +815,10 @@ The following example code opens the new url in system's default browser.
 const { shell } = require('electron')
 const webview = document.querySelector('webview')
 
-webview.addEventListener('new-window', (e) => {
+webview.addEventListener('new-window', async (e) => {
   const protocol = require('url').parse(e.url).protocol
   if (protocol === 'http:' || protocol === 'https:') {
-    shell.openExternal(e.url)
+    await shell.openExternal(e.url)
   }
 })
 ```
@@ -837,7 +885,7 @@ webview.addEventListener('close', () => {
 Returns:
 
 * `channel` String
-* `args` Array
+* `args` any[]
 
 Fired when the guest page has sent an asynchronous message to embedder page.
 
@@ -865,10 +913,6 @@ ipcRenderer.on('ping', () => {
 ### Event: 'crashed'
 
 Fired when the renderer process is crashed.
-
-### Event: 'gpu-crashed'
-
-Fired when the gpu process is crashed.
 
 ### Event: 'plugin-crashed'
 

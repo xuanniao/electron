@@ -1,4 +1,4 @@
-const { remote } = require('electron')
+const { ipcRenderer } = require('electron')
 const fs = require('fs')
 const path = require('path')
 
@@ -38,22 +38,38 @@ describe('process module', () => {
     })
   })
 
-  // FIXME: Chromium 67 - getProcessMemoryInfo has been removed
-  // describe('process.getProcessMemoryInfo()', () => {
-  //   it('returns process memory info object', () => {
-  //     const processMemoryInfo = process.getProcessMemoryInfo()
-  //     expect(processMemoryInfo.peakWorkingSetSize).to.be.a('number')
-  //     expect(processMemoryInfo.privateBytes).to.be.a('number')
-  //     expect(processMemoryInfo.sharedBytes).to.be.a('number')
-  //     expect(processMemoryInfo.workingSetSize).to.be.a('number')
-  //   })
-  // })
+  describe('process.getBlinkMemoryInfo()', () => {
+    it('returns blink memory information object', () => {
+      const heapStats = process.getBlinkMemoryInfo()
+      expect(heapStats.allocated).to.be.a('number')
+      expect(heapStats.total).to.be.a('number')
+    })
+  })
+
+  describe('process.getProcessMemoryInfo()', async () => {
+    it('resolves promise successfully with valid data', async () => {
+      const memoryInfo = await process.getProcessMemoryInfo()
+      expect(memoryInfo).to.be.an('object')
+      if (process.platform === 'linux' || process.platform === 'windows') {
+        expect(memoryInfo.residentSet).to.be.a('number').greaterThan(0)
+      }
+      expect(memoryInfo.private).to.be.a('number').greaterThan(0)
+      // Shared bytes can be zero
+      expect(memoryInfo.shared).to.be.a('number').greaterThan(-1)
+    })
+  })
 
   describe('process.getSystemMemoryInfo()', () => {
     it('returns system memory info object', () => {
       const systemMemoryInfo = process.getSystemMemoryInfo()
       expect(systemMemoryInfo.free).to.be.a('number')
       expect(systemMemoryInfo.total).to.be.a('number')
+    })
+  })
+
+  describe('process.getSystemVersion()', () => {
+    it('returns a string', () => {
+      expect(process.getSystemVersion()).to.be.a('string')
     })
   })
 
@@ -73,8 +89,8 @@ describe('process module', () => {
   })
 
   describe('process.takeHeapSnapshot()', () => {
-    it('returns true on success', () => {
-      const filePath = path.join(remote.app.getPath('temp'), 'test.heapsnapshot')
+    it('returns true on success', async () => {
+      const filePath = path.join(await ipcRenderer.invoke('get-temp-dir'), 'test.heapsnapshot')
 
       const cleanup = () => {
         try {
